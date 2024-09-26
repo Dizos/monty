@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
             pint(&stack, line_number);
         else if (strcmp(opcode, "pop") == 0)
             pop(&stack, line_number);
+        else if (strcmp(opcode, "swap") == 0)
+            swap(&stack, line_number);
         else
         {
             fprintf(stderr, "L%d: unknown instruction %s\n", line_number, opcode);
@@ -155,6 +157,26 @@ void pop(stack_t **stack, unsigned int line_number)
     if (*stack != NULL)
         (*stack)->prev = NULL;
     free(temp);
+}
+
+/**
+ * swap - swaps the top two elements of the stack
+ * @stack: double pointer to the head of the stack
+ * @line_number: line number in the Monty byte code file
+ */
+void swap(stack_t **stack, unsigned int line_number)
+{
+    int temp;
+
+    if (*stack == NULL || (*stack)->next == NULL)
+    {
+        fprintf(stderr, "L%d: can't swap, stack too short\n", line_number);
+        exit(EXIT_FAILURE);
+    }
+
+    temp = (*stack)->n;
+    (*stack)->n = (*stack)->next->n;
+    (*stack)->next->n = temp;
 }
 
 /**
