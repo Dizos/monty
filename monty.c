@@ -2,6 +2,7 @@
 #include <ctype.h>
 
 #define BUFFER_SIZE 1024
+stack_t *stack = NULL;
 
 /**
  * main - Monty bytecode interpreter
@@ -14,7 +15,6 @@ int main(int argc, char *argv[])
     FILE *file;
     char line[BUFFER_SIZE];
     unsigned int line_number = 0;
-    stack_t *stack = NULL;
     char *opcode;
 
     if (argc != 2)
