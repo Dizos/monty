@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
             push(&stack, line_number);
         else if (strcmp(opcode, "pall") == 0)
             pall(&stack, line_number);
+        else if (strcmp(opcode, "pint") == 0)
+            pint(&stack, line_number);
         else
         {
             fprintf(stderr, "L%d: unknown instruction %s\n", line_number, opcode);
@@ -114,6 +116,21 @@ void pall(stack_t **stack, unsigned int line_number)
         printf("%d\n", current->n);
         current = current->next;
     }
+}
+
+/**
+ * pint - prints the value at the top of the stack
+ * @stack: double pointer to the head of the stack
+ * @line_number: line number in the Monty byte code file
+ */
+void pint(stack_t **stack, unsigned int line_number)
+{
+    if (*stack == NULL)
+    {
+        fprintf(stderr, "L%d: can't pint, stack empty\n", line_number);
+        exit(EXIT_FAILURE);
+    }
+    printf("%d\n", (*stack)->n);
 }
 
 /**
