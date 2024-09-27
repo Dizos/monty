@@ -4,6 +4,15 @@
 #define BUFFER_SIZE 1024
 stack_t *stack = NULL;
 
+instruction_t instructions[] = {
+    {"push", push},
+    {"pall", pall},
+    {"pint", pint},
+    {"pop", pop},
+    {"swap", swap},
+    {NULL, NULL}
+};
+
 /**
  * main - Monty bytecode interpreter
  * @argc: number of arguments
@@ -16,18 +25,19 @@ int main(int argc, char *argv[])
     char line[BUFFER_SIZE];
     unsigned int line_number = 0;
     char *opcode;
+    int i;
 
     if (argc != 2)
     {
         fprintf(stderr, "USAGE: monty file\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     file = fopen(argv[1], "r");
     if (file == NULL)
     {
         fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     while (fgets(line, sizeof(line), file) != NULL)
@@ -37,22 +47,21 @@ int main(int argc, char *argv[])
         if (opcode == NULL || opcode[0] == '#')
             continue;
 
-        if (strcmp(opcode, "push") == 0)
-            push(&stack, line_number);
-        else if (strcmp(opcode, "pall") == 0)
-            pall(&stack, line_number);
-        else if (strcmp(opcode, "pint") == 0)
-            pint(&stack, line_number);
-        else if (strcmp(opcode, "pop") == 0)
-            pop(&stack, line_number);
-        else if (strcmp(opcode, "swap") == 0)
-            swap(&stack, line_number);
-        else
+        for (i = 0; instructions[i].opcode; i++)
+        {
+            if (strcmp(opcode, instructions[i].opcode) == 0)
+            {
+                instructions[i].f(&stack, line_number);
+                break;
+            }
+        }
+
+        if (instructions[i].opcode == NULL)
         {
             fprintf(stderr, "L%d: unknown instruction %s\n", line_number, opcode);
             fclose(file);
             free_stack(stack);
-            exit(EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
     }
 
@@ -62,135 +71,24 @@ int main(int argc, char *argv[])
 }
 
 /**
- * push - pushes an element to the stack
- * @stack: double pointer to the head of the stack
- * @line_number: line number in the Monty byte code file
+ * is_number - checks if a string is a valid number
+ * @str: string to check
+ * Return: 1 if valid number, 0 otherwise
  */
-void push(stack_t **stack, unsigned int line_number)
+int is_number(char *str)
 {
-    char *arg = strtok(NULL, " \t\n");
-    int n, i;
-    stack_t *new_node;
+    if (str == NULL || *str == '\0')
+        return 0;
 
-    if (arg == NULL)
+    if (*str == '-')
+        str++;
+
+    while (*str)
     {
-        fprintf(stderr, "L%d: usage: push integer\n", line_number);
-        exit(EXIT_FAILURE);
+        if (!isdigit(*str))
+            return 0;
+        str++;
     }
 
-    for (i = 0; arg[i] != '\0'; i++)
-    {
-        if (i == 0 && arg[i] == '-')
-            continue;
-        if (!isdigit(arg[i]))
-        {
-            fprintf(stderr, "L%d: usage: push integer\n", line_number);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    n = atoi(arg);
-    new_node = malloc(sizeof(stack_t));
-    if (new_node == NULL)
-    {
-        fprintf(stderr, "Error: malloc failed\n");
-        exit(EXIT_FAILURE);
-    }
-
-    new_node->n = n;
-    new_node->prev = NULL;
-    new_node->next = *stack;
-    if (*stack != NULL)
-        (*stack)->prev = new_node;
-    *stack = new_node;
-}
-
-/**
- * pall - prints all values on the stack
- * @stack: double pointer to the head of the stack
- * @line_number: line number in the Monty byte code file (unused)
- */
-void pall(stack_t **stack, unsigned int line_number)
-{
-    stack_t *current = *stack;
-    (void)line_number;
-
-    while (current != NULL)
-    {
-        printf("%d\n", current->n);
-        current = current->next;
-    }
-}
-
-/**
- * pint - prints the value at the top of the stack
- * @stack: double pointer to the head of the stack
- * @line_number: line number in the Monty byte code file
- */
-void pint(stack_t **stack, unsigned int line_number)
-{
-    if (*stack == NULL)
-    {
-        fprintf(stderr, "L%d: can't pint, stack empty\n", line_number);
-        exit(EXIT_FAILURE);
-    }
-    printf("%d\n", (*stack)->n);
-}
-
-/**
- * pop - removes the top element of the stack
- * @stack: double pointer to the head of the stack
- * @line_number: line number in the Monty byte code file
- */
-void pop(stack_t **stack, unsigned int line_number)
-{
-    stack_t *temp;
-
-    if (*stack == NULL)
-    {
-        fprintf(stderr, "L%d: can't pop an empty stack\n", line_number);
-        exit(EXIT_FAILURE);
-    }
-
-    temp = *stack;
-    *stack = (*stack)->next;
-    if (*stack != NULL)
-        (*stack)->prev = NULL;
-    free(temp);
-}
-
-/**
- * swap - swaps the top two elements of the stack
- * @stack: double pointer to the head of the stack
- * @line_number: line number in the Monty byte code file
- */
-void swap(stack_t **stack, unsigned int line_number)
-{
-    int temp;
-
-    if (*stack == NULL || (*stack)->next == NULL)
-    {
-        fprintf(stderr, "L%d: can't swap, stack too short\n", line_number);
-        exit(EXIT_FAILURE);
-    }
-
-    temp = (*stack)->n;
-    (*stack)->n = (*stack)->next->n;
-    (*stack)->next->n = temp;
-}
-
-/**
- * free_stack - frees a stack
- * @stack: pointer to the head of the stack
- */
-void free_stack(stack_t *stack)
-{
-    stack_t *temp;
-
-    while (stack != NULL)
-    {
-        temp = stack;
-        stack = stack->next;
-        free(temp);
-    }
+    return 1;
 }
